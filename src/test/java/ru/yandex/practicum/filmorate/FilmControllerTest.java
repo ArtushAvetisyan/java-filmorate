@@ -24,12 +24,27 @@ public class FilmControllerTest {
     @Test
     void shouldReturnAllFilms() {
         List<Film> movies = List.of(
-                new Film("Интерстеллар", "a".repeat(199), LocalDate.of(2014, 11, 7),
-                        169),
-                new Film("Время", "a".repeat(199), LocalDate.of(2020, 11, 7),
-                        170),
-                new Film("Звёздные войны", "a".repeat(199), LocalDate.of(2008, 1, 7),
-                        200));
+                Film.builder()
+                        .name("Интерстеллар")
+                        .description("a".repeat(199))
+                        .releaseDate(LocalDate.of(2014, 11, 7))
+                        .duration(169)
+                        .build(),
+
+                Film.builder()
+                        .name("Время")
+                        .description("a".repeat(199))
+                        .releaseDate(LocalDate.of(2020, 11, 7))
+                        .duration(170)
+                        .build(),
+
+                Film.builder()
+                        .name("Звёздные войны")
+                        .description("a".repeat(199))
+                        .releaseDate(LocalDate.of(2008, 1, 7))
+                        .duration(200)
+                        .build());
+
         filmController.addFilm(movies.getFirst());
         filmController.addFilm(movies.get(1));
         filmController.addFilm(movies.getLast());
@@ -43,8 +58,12 @@ public class FilmControllerTest {
 
     @Test
     public void shouldCreateFilmIfDataIsCorrect() {
-        Film newFilm = new Film("Интерстеллар", "a".repeat(199), LocalDate.of(2014, 11, 7),
-                169);
+        Film newFilm = Film.builder()
+                .name("Интерстеллар")
+                .description("a".repeat(199))
+                .releaseDate(LocalDate.of(2014, 11, 7))
+                .duration(169)
+                .build();
         Film film = filmController.addFilm(newFilm);
 
         Assertions.assertEquals(1, filmController.getAllFilms().size());
@@ -53,8 +72,12 @@ public class FilmControllerTest {
 
     @Test
     public void shouldReturnExceptionIfNameIsIncorrect() {
-        Film newFilm = new Film("", "a".repeat(199), LocalDate.of(2014, 11, 7),
-                169);
+        Film newFilm = Film.builder()
+                .name("")
+                .description("a".repeat(199))
+                .releaseDate(LocalDate.of(2014, 11, 7))
+                .duration(169)
+                .build();
         ValidationException exception = assertThrows(ValidationException.class, () -> filmController.addFilm(newFilm));
 
         Assertions.assertEquals("Название фильмы не может быть пустым", exception.getMessage());
@@ -62,10 +85,18 @@ public class FilmControllerTest {
 
     @Test
     public void shouldReturnExceptionIfDescriptionIsMoreThan200Symbols() {
-        Film filmWith201Symbol = new Film("Интерстеллар", "a".repeat(201), LocalDate.of(2014, 11, 7),
-                169);
-        Film filmWith200Symbols = new Film("Интерстеллар", "a".repeat(200), LocalDate.of(2014, 11, 7),
-                169);
+        Film filmWith201Symbol = Film.builder()
+                .name("Интерстеллар")
+                .description("a".repeat(201))
+                .releaseDate(LocalDate.of(2014, 11, 7))
+                .duration(169)
+                .build();
+        Film filmWith200Symbols = Film.builder()
+                .name("Интерстеллар")
+                .description("a".repeat(200))
+                .releaseDate(LocalDate.of(2014, 11, 7))
+                .duration(169)
+                .build();
         filmController.addFilm(filmWith200Symbols);
         ValidationException exception1 = assertThrows(ValidationException.class, () -> filmController.addFilm(filmWith201Symbol));
 
@@ -75,10 +106,18 @@ public class FilmControllerTest {
 
     @Test
     public void shouldReturnExceptionIfReleaseDateIsIncorrect() {
-        Film filmWithCorrectDate = new Film("Интерстеллар", "a".repeat(200), LocalDate.of(1895, 12, 28),
-                169);
-        Film filmWithIncorrectDate = new Film("Интерстеллар", "a".repeat(200), LocalDate.of(1895, 12, 27),
-                169);
+        Film filmWithCorrectDate = Film.builder()
+                .name("Интерстеллар")
+                .description("a".repeat(200))
+                .releaseDate(LocalDate.of(1895, 12, 28))
+                .duration(169)
+                .build();
+        Film filmWithIncorrectDate = Film.builder()
+                .name("Интерстеллар")
+                .description("a".repeat(200))
+                .releaseDate(LocalDate.of(1895, 12, 27))
+                .duration(169)
+                .build();
         filmController.addFilm(filmWithCorrectDate);
         ValidationException exception = assertThrows(ValidationException.class, () -> filmController.addFilm(filmWithIncorrectDate));
 
@@ -88,10 +127,18 @@ public class FilmControllerTest {
 
     @Test
     public void shouldReturnExceptionIfDurationIsNegative() {
-        Film filmWithIncorrectDuration1 = new Film("Интерстеллар", "a".repeat(200), LocalDate.of(2014, 11, 7),
-                0);
-        Film filmWithIncorrectDuration2 = new Film("Интерстеллар", "a".repeat(200), LocalDate.of(2014, 11, 7),
-                -1);
+        Film filmWithIncorrectDuration1 = Film.builder()
+                .name("Интерстеллар")
+                .description("a".repeat(200))
+                .releaseDate(LocalDate.of(2014, 11, 7))
+                .duration(0)
+                .build();
+        Film filmWithIncorrectDuration2 = Film.builder()
+                .name("Интерстеллар")
+                .description("a".repeat(200))
+                .releaseDate(LocalDate.of(2014, 11, 7))
+                .duration(-1)
+                .build();
         ValidationException exception1 = assertThrows(ValidationException.class, () -> filmController.addFilm(filmWithIncorrectDuration1));
         ValidationException exception2 = assertThrows(ValidationException.class, () -> filmController.addFilm(filmWithIncorrectDuration2));
 
@@ -101,11 +148,19 @@ public class FilmControllerTest {
 
     @Test
     void shouldCorrectUpdatedFilm() {
-        Film oldFilm = new Film("Интерстеллар", "a".repeat(200), LocalDate.of(2014, 11, 7),
-                169);
-        Film newFilm = new Film("Время", "a".repeat(200), LocalDate.of(2020, 1, 23),
-                198);
-        // Тут присваиваю одинаковые id
+        Film oldFilm = Film.builder()
+                .name("Интерстеллар")
+                .description("a".repeat(200))
+                .releaseDate(LocalDate.of(2014, 11, 7))
+                .duration(169)
+                .build();
+        Film newFilm = Film.builder()
+                .name("Время")
+                .description("a".repeat(200))
+                .releaseDate(LocalDate.of(2020, 1, 23))
+                .duration(198)
+                .build();
+
         Film oldFilmWithId = filmController.addFilm(oldFilm);
         newFilm.setId(oldFilmWithId.getId());
         Film updatedFilm = filmController.update(newFilm);
