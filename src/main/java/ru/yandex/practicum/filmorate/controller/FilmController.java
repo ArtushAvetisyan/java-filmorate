@@ -17,6 +17,7 @@ import java.util.Map;
 @Slf4j
 public class FilmController {
     private static final LocalDate FILM_MINIMUM_RELEASE_DATE = LocalDate.of(1895, 12, 28);
+    private static final int MAX_DESCRIPTION_SIZE = 200;
     private final Map<Long, Film> movies = new HashMap<>();
 
     @PostMapping
@@ -30,15 +31,37 @@ public class FilmController {
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody Film film) {
+    public Film update(@RequestBody Film film) {
         if (!movies.containsKey(film.getId())) {
             log.warn("Не удалось найти фильм c данным ID: {}", film.getId());
             throw new NotFoundException("К сожалению не удалось найти фильм с таким ID");
         }
-        checkFilmReleaseDate(film);
-        movies.put(film.getId(), film);
-        log.info("Фильм успешно заменён: ID - {}", film.getId());
-        return film;
+        Film oldFilm = movies.get(film.getId());
+        if (film.getName() != null && !film.getName().isBlank()) {
+            oldFilm.setName(film.getName());
+            log.info("Название фильма успешно обновлено. Новое название: {}", film.getName());
+        }
+        if (film.getDescription() != null && !film.getDescription().isBlank()) {
+            if (film.getDescription().length() > MAX_DESCRIPTION_SIZE) {
+                log.warn("Описание фильма превышает " + MAX_DESCRIPTION_SIZE + " символов");
+                throw new ValidationException("Описание не может превышать 200 символов");
+            }
+            oldFilm.setDescription(film.getDescription());
+            log.info("Описание фильма успешно обновлено: ID - {}", film.getId());
+        }
+        if (film.getReleaseDate() != null && !film.getReleaseDate().equals(oldFilm.getReleaseDate())) {
+            checkFilmReleaseDate(film);
+            oldFilm.setReleaseDate(film.getReleaseDate());
+            log.info("Дата релиза фильма успешно обновлена: ID - {}", film.getId());
+        }
+        if (film.getDuration() < 0) {
+            log.warn("Продолжительность фильма не может быть отрицательным числом");
+            throw new ValidationException("Продолжительность фильма должна быть положительным числом");
+        } else if (film.getDuration() > 0 && film.getDuration() != oldFilm.getDuration()) {
+            oldFilm.setDuration(film.getDuration());
+            log.info("Продолжительность фильма успешно обновлена: ID - {}", film.getId());
+        }
+        return movies.get(film.getId());
     }
 
     @GetMapping
@@ -47,7 +70,8 @@ public class FilmController {
     }
 
     private void checkFilmReleaseDate(Film film) {
-        if (film.getReleaseDate().isBefore(FILM_MINIMUM_RELEASE_DATE)) {
+        // В методе add на null уже есть проверка, но данную проверку оставил, чтобы использовать в update
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(FILM_MINIMUM_RELEASE_DATE)) {
             log.warn("Дата релиза раньше 28 декабря 1895 года");
             throw new ValidationException("Дата релиза должна быть не раньше 28 декабря 1895 года");
         }
