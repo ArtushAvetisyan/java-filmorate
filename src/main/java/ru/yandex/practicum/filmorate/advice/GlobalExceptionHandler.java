@@ -43,4 +43,11 @@ public class GlobalExceptionHandler {
         log.warn("Ошибка. Отсутствуют данные: {}", exception.getMessage());
         return Map.of("Error", exception.getMessage());
     }
+
+    @ExceptionHandler(Throwable.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Map<String, String> handleThrowableException(Throwable exception) {
+        log.error("Произошла непредвиденная ошибка сервера: {}", exception.getMessage(), exception);
+        return Map.of("error", "Внутренняя ошибка сервера");
+    }
 }
