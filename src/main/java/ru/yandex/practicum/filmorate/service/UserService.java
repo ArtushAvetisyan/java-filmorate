@@ -26,8 +26,8 @@ public class UserService {
     }
 
     public User getUserById(long id) {
-        return Optional.ofNullable(userStorage.getUsers().get(id)).orElseThrow(() -> new NotFoundException
-                ("Пользователь с id - " + id + " не найден"));
+        return Optional.ofNullable(userStorage.getUsers().get(id)).orElseThrow(() -> new NotFoundException(
+                "Пользователь с id - " + id + " не найден"));
     }
 
     public List<User> getUserFriendList(long id) {

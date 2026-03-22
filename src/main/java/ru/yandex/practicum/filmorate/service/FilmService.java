@@ -30,8 +30,8 @@ public class FilmService {
     }
 
     public Film getFilmById(long id) {
-        return Optional.ofNullable(filmStorage.getMovies().get(id)).orElseThrow(() -> new NotFoundException
-                ("Фильм с id - " + id + " не найден"));
+        return Optional.ofNullable(filmStorage.getMovies().get(id)).orElseThrow(() -> new NotFoundException(
+                "Фильм с id - " + id + " не найден"));
     }
 
     public Film createFilm(Film film) {
