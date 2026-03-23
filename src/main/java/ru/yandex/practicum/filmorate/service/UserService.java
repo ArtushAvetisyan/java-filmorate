@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -9,24 +9,19 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
-@Slf4j
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final UserStorage userStorage;
 
-    @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
-
     public Collection<User> getAllUsers() {
-        return userStorage.getUsers().values();
+        return userStorage.getAllUsers();
     }
 
     public User getUserById(long id) {
-        return Optional.ofNullable(userStorage.getUsers().get(id)).orElseThrow(() -> new NotFoundException(
+        return userStorage.getUserById(id).orElseThrow(() -> new NotFoundException(
                 "Пользователь с id - " + id + " не найден"));
     }
 

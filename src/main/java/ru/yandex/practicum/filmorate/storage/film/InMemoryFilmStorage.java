@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -8,16 +7,19 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Component
 @Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
     private static final LocalDate FILM_MINIMUM_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private static final int MAX_DESCRIPTION_SIZE = 200;
-    @Getter
     private final Map<Long, Film> movies = new HashMap<>();
+
+    @Override
+    public Collection<Film> getAllFilms() {
+        return new ArrayList<>(movies.values());
+    }
 
     @Override
     public Film addFilm(Film film) {
@@ -61,6 +63,11 @@ public class InMemoryFilmStorage implements FilmStorage {
             log.info("Продолжительность фильма успешно обновлена: ID - {}", film.getId());
         }
         return movies.get(film.getId());
+    }
+
+    @Override
+    public Optional<Film> getFilmById(long id) {
+        return Optional.ofNullable(movies.get(id));
     }
 
     private void checkFilmReleaseDate(Film film) {

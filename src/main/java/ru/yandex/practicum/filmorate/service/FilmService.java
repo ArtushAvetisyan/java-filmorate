@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -11,26 +11,20 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class FilmService {
     private final FilmStorage filmStorage;
     private final UserService userService;
 
-    @Autowired
-    public FilmService(FilmStorage filmStorage, UserService userService) {
-        this.filmStorage = filmStorage;
-        this.userService = userService;
-    }
-
     public Collection<Film> getAllFilms() {
-        return filmStorage.getMovies().values();
+        return filmStorage.getAllFilms();
     }
 
     public Film getFilmById(long id) {
-        return Optional.ofNullable(filmStorage.getMovies().get(id)).orElseThrow(() -> new NotFoundException(
+        return filmStorage.getFilmById(id).orElseThrow(() -> new NotFoundException(
                 "Фильм с id - " + id + " не найден"));
     }
 
