@@ -6,11 +6,15 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.jackson.Jacksonized;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Builder
+@Jacksonized
 public class Film {
     private static final int MAX_DESCRIPTION_SIZE = 200;
     private long id;
@@ -24,7 +28,9 @@ public class Film {
     @NotNull
     private LocalDate releaseDate;
 
-    @NotNull
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private long duration;
+
+    @Builder.Default
+    private Set<Long> likes = new HashSet<>();
 }
