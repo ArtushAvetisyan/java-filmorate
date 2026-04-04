@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.user.User;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -87,5 +87,25 @@ public class InMemoryUserStorage implements UserStorage {
                 .max()
                 .orElse(0);
         return ++maxId;
+    }
+
+    // Заглушки
+    @Override
+    public List<User> getUserFriendList(long userId) {
+        return List.of();
+    }
+
+    @Override
+    public List<User> getCommonFriends(long firstUserId, long secondUserId) {
+        return List.of();
+    }
+
+    @Override
+    public void addFriend(long userId, long friendId) {
+
+    }
+
+    @Override
+    public void deleteFriend(long userId, long friendId) {
     }
 }

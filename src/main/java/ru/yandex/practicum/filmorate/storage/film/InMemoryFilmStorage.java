@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.film.Film;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -84,5 +84,19 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .max()
                 .orElse(0);
         return ++maxId;
+    }
+
+    // Заглушки (побоялся удалять класс, так как такое требование отсутствует)
+    @Override
+    public void addLike(long filmId, long userId) {
+    }
+
+    @Override
+    public void deleteLike(long filmId, long userId) {
+    }
+
+    @Override
+    public List<Film> getMostPopularFilms(int count) {
+        return List.of();
     }
 }

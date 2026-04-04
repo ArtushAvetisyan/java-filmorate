@@ -3,3 +3,13 @@ logging:
     org:
       zalando:
         logbook: TRACE
+
+spring:
+  sql:
+    init:
+      mode: ALWAYS
+  datasource:
+    url: jdbc:h2:file:./db/filmorate
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password

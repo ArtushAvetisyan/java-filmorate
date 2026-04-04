@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
@@ -227,6 +227,6 @@ public class FilmControllerTest {
 
         NotFoundException exception = assertThrows(NotFoundException.class, () -> filmController.update(film));
 
-        Assertions.assertEquals("К сожалению не удалось найти фильм с таким ID", exception.getMessage());
+        Assertions.assertEquals("Фильм с id - 0 не найден", exception.getMessage());
     }
 }
