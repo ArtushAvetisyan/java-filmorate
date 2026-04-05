@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
@@ -12,7 +15,7 @@ import ru.yandex.practicum.filmorate.dao.mapper.GenreMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.model.film.Genre;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -24,6 +27,7 @@ import java.util.*;
 @Slf4j
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbc;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final FilmMapper mapper;
     private final GenreMapper genreMapper;
 
@@ -35,10 +39,11 @@ public class FilmDbStorage implements FilmStorage {
                 "ORDER BY f.film_id";
 
         List<Film> films = jdbc.query(query, mapper);
-        films.forEach(film -> {
-            film.setGenres(getFilmGenres(film.getId()));
-            film.setLikes(new HashSet<>(getLikesList(film.getId())));
-        });
+        if (films.isEmpty()) {
+            return films;
+        }
+        loadGenres(films);
+        loadLikes(films);
         return films;
     }
 
@@ -53,10 +58,11 @@ public class FilmDbStorage implements FilmStorage {
                 "LIMIT ?";
 
         List<Film> films = jdbc.query(query, mapper, count);
-        films.forEach(film -> {
-            film.setGenres(getFilmGenres(film.getId()));
-            film.setLikes(new HashSet<>(getLikesList(film.getId())));
-        });
+        if (films.isEmpty()) {
+            return films;
+        }
+        loadGenres(films);
+        loadLikes(films);
         return films;
     }
 
@@ -169,4 +175,59 @@ public class FilmDbStorage implements FilmStorage {
         List<Genre> genres = jdbc.query(query, genreMapper, filmId);
         return new LinkedHashSet<>(genres);
     }
+
+    private void loadGenres(List<Film> films) {
+        List<Long> filmIds = films.stream().map(Film::getId).toList();
+        String query = "SELECT fg.film_id, g.genre_id, g.name " +
+                "FROM film_genres fg " +
+                "JOIN genres g ON fg.genre_id = g.genre_id " +
+                "WHERE fg.film_id IN (:ids)";
+
+        SqlParameterSource parameters = new MapSqlParameterSource("ids", filmIds);
+        Map<Long, LinkedHashSet<Genre>> genresByFilmId = namedParameterJdbcTemplate.query(query, parameters, rs -> {
+            Map<Long, LinkedHashSet<Genre>> map = new HashMap<>();
+
+            while (rs.next()) {
+                Long filmId = rs.getLong("film_id");
+                Genre genre = Genre.builder()
+                        .id(rs.getLong("genre_id"))
+                        .name(rs.getString("name"))
+                        .build();
+                map.computeIfAbsent(filmId, k -> new LinkedHashSet<>()).add(genre);
+            }
+            return map;
+        });
+        if (genresByFilmId == null) {
+            genresByFilmId = Collections.emptyMap();
+        }
+        for (Film film : films) {
+            LinkedHashSet<Genre> genres = genresByFilmId.getOrDefault(film.getId(), new LinkedHashSet<>());
+            film.setGenres(genres);
+        }
+    }
+
+    private void loadLikes(List<Film> films) {
+        List<Long> filmids = films.stream().map(Film::getId).toList();
+        String query = "SELECT film_id, user_id FROM likes WHERE film_id IN (:ids)";
+        SqlParameterSource parameters = new MapSqlParameterSource("ids", filmids);
+        Map<Long, Set<Long>> likesByFilmId = namedParameterJdbcTemplate.query(query, parameters, rs -> {
+            Map<Long, Set<Long>> map = new HashMap<>();
+
+            while (rs.next()) {
+                Long filmId = rs.getLong("film_id");
+                Long userId = rs.getLong("user_id");
+                map.computeIfAbsent(filmId, k -> new HashSet<>()).add(userId);
+            }
+            return map;
+        });
+        if (likesByFilmId == null) {
+            likesByFilmId = Collections.emptyMap();
+        }
+        for (Film film : films) {
+            Set<Long> likes = likesByFilmId.getOrDefault(film.getId(), new HashSet<>());
+            film.setLikes(likes);
+        }
+    }
 }
+
+
