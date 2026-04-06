@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.advice;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -49,5 +50,12 @@ public class GlobalExceptionHandler {
     public Map<String, String> handleThrowableException(Throwable exception) {
         log.error("Произошла непредвиденная ошибка сервера: {}", exception.getMessage(), exception);
         return Map.of("error", "Внутренняя ошибка сервера");
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> handleDataIntegrityViolationException(DataIntegrityViolationException exception) {
+        log.error("Нарушение целостности данных: {}", exception.getMessage());
+        return Map.of("error", "Ошибка валидации данных в БД");
     }
 }

@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.model;
+package ru.yandex.practicum.filmorate.model.film;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,6 +10,7 @@ import lombok.extern.jackson.Jacksonized;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Data
@@ -33,4 +34,9 @@ public class Film {
 
     @Builder.Default
     private Set<Long> likes = new HashSet<>();
+
+    @Builder.Default
+    private LinkedHashSet<Genre> genres = new LinkedHashSet<>();
+
+    private Mpa mpa;
 }
