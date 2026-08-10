@@ -7,139 +7,139 @@
 ![Zalando Logbook](https://img.shields.io/badge/Zalando-Logbook-blue?style=flat-square)
 ![REST API](https://img.shields.io/badge/REST-API-red?style=flat-square)
 
-**Filmorate** — это полноценный бэкенд-сервис для оценки фильмов, формирования пользовательского комьюнити и получения рекомендаций по просмотру кино. В текущей версии сервис поддерживает долговременное хранение данных в базе данных H2, работу с жанрами, рейтингами MPA, односторонней системой дружбы и покрыт интеграционными тестами.
+**Filmorate** — is a full-fledged backend service for rating movies, forming a user community, and receiving movie-watching recommendations. In the current version, the service supports long-term data storage in the H2 database, working with genres, MPA ratings, a one-sided friendship system, and is covered by integration tests.
 
 ---
 
-## 📋 Оглавление
-- [О сервисе](#-о-сервисе)
-- [Архитектурные решения](#-архитектурные-решения)
-- [Состав компонентов](#-состав-компонентов)
-- [Технологический стек](#-технологический-стек)
-- [Структура базы данных](#-структура-базы-данных)
-- [Бизнес-логика и REST API](#-бизнес-логика-и-rest-api)
-- [Обработка ошибок и логирование](#-обработка-ошибок-и-логирование)
-- [Интеграционное тестирование](#-интеграционное-тестирование)
-- [Инструкция по запуску](#-инструкция-по-запуску)
+## 📋 Table of Contents
+- [About the Service](#-about-the-service)
+- [Architectural Solutions](#-architectural-solutions)
+- [Component Composition](#-component-composition)
+- [Technology Stack](#-technology-stack)
+- [Database Structure](#-database-structure)
+- [Business Logic and REST API](#-business-logic-and-rest-api)
+- [Error Handling and Logging](#-error-handling-and-logging)
+- [Integration Testing](#-integration-testing)
+- [Launch Instructions](#-launch-instructions)
 
 ---
 
-## 📖 О сервисе
+## 📖 About the Service
 
-Основная цель **Filmorate** — объединить любителей кино в единое сообщество, предоставить удобный инструмент для поиска популярных фильмов и обеспечить сохранение состояния системы между перезапусками приложения:
-1. **Персистентность данных**: Все данные о пользователях, фильмах, лайках, друзьях, жанрах и рейтингах надежно сохраняются в реляционной базе данных.
-2. **Социальное взаимодействие**: Поддержка односторонней дружбы (отправка заявок в друзья) и нахождение общих интересов.
-3. **Каталогизация и рейтинги**: Классификация фильмов по жанрам и возрастным рейтингам (MPA/MPAA) с возможностью формирования топов по лайкам.
-
----
-
-## 🏗 Архитектурные решения
-
-Проект спроектирован с использованием паттернов **Data Access Object (DAO)**, **Inversion of Control (IoC)** и принципов **Clean Architecture**:
-
-1. **Паттерн DAO (Data Access Object)**: Слой доступа к данным абстрагирован через интерфейсы `UserStorage` и `FilmStorage`. Их конкретные реализации (`UserDbStorage`, `FilmDbStorage`) взаимодействуют с реляционной БД через `JdbcTemplate`.
-2. **Разделение хранилищ через `@Qualifier`**: Для управления различными реализациями хранилищ (InMemory и DB Storage) используется аннотация `@Qualifier`, позволяющая Spring IoC точно внедрять требуемые компоненты.
-3. **Двухрежимная работа с H2**:
-    - **Рабочий режим**: Данные сохраняются в файле на жестком диске (`jdbc:h2:file:./db/filmorate`), что предотвращает их потерю между перезапусками.
-    - **Тестовый режим**: Использование базы данных в оперативной памяти (In-Memory) для быстрого и изолированного прогона интеграционных тестов.
-4. **Автоматическая инициализация схемы**: Схема БД восстанавливается при запуске из файла `schema.sql`, а справочные данные (жанры, рейтинги) инициализируются из `data.sql` с конструкцией `IF NOT EXISTS`.
+The main goal of **Filmorate** is to unite movie lovers into a single community, provide a convenient tool for finding popular movies, and ensure that the system state is preserved between application restarts:
+1. **Data Persistence**: All data about users, movies, likes, friends, genres, and ratings is reliably stored in a relational database.
+2. **Social Interaction**: Support for one-sided friendship (sending friend requests) and finding common interests.
+3. **Cataloging and Ratings**: Classification of movies by genres and age ratings (MPA/MPAA) with the ability to form top lists by likes.
 
 ---
 
-## 🧩 Состав компонентов
+## 🏗 Architectural Solutions
 
-### 1. Слой доступа к данным (DAO / Storage Layer)
-| Интерфейс / Класс | Назначение и функционал |
+The project is designed using the **Data Access Object (DAO)**, **Inversion of Control (IoC)** patterns and **Clean Architecture** principles:
+
+1. **DAO Pattern (Data Access Object)**: The data access layer is abstracted through the `UserStorage` and `FilmStorage` interfaces. Their concrete implementations (`UserDbStorage`, `FilmDbStorage`) interact with the relational database through `JdbcTemplate`.
+2. **Storage Separation via `@Qualifier`**: To manage different storage implementations (InMemory and DB Storage), the `@Qualifier` annotation is used, allowing Spring IoC to precisely inject the required components.
+3. **Two-Mode Operation with H2**:
+    - **Production Mode**: Data is stored in a file on the hard drive (`jdbc:h2:file:./db/filmorate`), which prevents its loss between restarts.
+    - **Test Mode**: Use of an in-memory database for fast and isolated execution of integration tests.
+4. **Automatic Schema Initialization**: The database schema is restored at startup from the `schema.sql` file, while reference data (genres, ratings) is initialized from `data.sql` using the `IF NOT EXISTS` construct.
+
+---
+
+## 🧩 Component Composition
+
+### 1. Data Access Layer (DAO / Storage Layer)
+| Interface / Class | Purpose and Functionality |
 | :--- | :--- |
-| **`UserStorage`** | Интерфейс, определяющий контракт управления пользователями. |
-| **`UserDbStorage`** | DAO-реализация `UserStorage` на базе `JdbcTemplate` (`@Repository` / `@Component`). |
-| **`FilmStorage`** | Интерфейс, определяющий контракт управления фильмами. |
-| **`FilmDbStorage`** | DAO-реализация `FilmStorage` на базе `JdbcTemplate` (`@Repository` / `@Component`). |
-| **`GenreDbStorage`** | DAO для работы со справочником жанров фильмов. |
-| **`MpaDbStorage`** | DAO для работы со справочником рейтингов MPA. |
+| **`UserStorage`** | Interface defining the contract for user management. |
+| **`UserDbStorage`** | DAO implementation of `UserStorage` based on `JdbcTemplate` (`@Repository` / `@Component`). |
+| **`FilmStorage`** | Interface defining the contract for movie management. |
+| **`FilmDbStorage`** | DAO implementation of `FilmStorage` based on `JdbcTemplate` (`@Repository` / `@Component`). |
+| **`GenreDbStorage`** | DAO for working with the movie genre reference directory. |
+| **`MpaDbStorage`** | DAO for working with the MPA rating reference directory. |
 
-### 2. Слой бизнес-логики (Service Layer)
-| Сервис | Назначение и функционал |
+### 2. Business Logic Layer (Service Layer)
+| Service | Purpose and Functionality |
 | :--- | :--- |
-| **`UserService`** | Бизнес-логика взаимодействия пользователей: односторонняя дружба, получение списка друзей и общих друзей. |
-| **`FilmService`** | Бизнес-логика фильмотеки: добавление/удаление лайков, фильтрация по рейтингам/жанрам, выдача топа фильмов. |
-| **`GenreService`** | Получение информации о жанрах фильмов. |
-| **`MpaService`** | Получение информации о рейтингах MPA. |
+| **`UserService`** | Business logic for user interaction: one-sided friendship, retrieving the list of friends and common friends. |
+| **`FilmService`** | Business logic for the movie library: adding/removing likes, filtering by ratings/genres, returning the top movies. |
+| **`GenreService`** | Retrieving information about movie genres. |
+| **`MpaService`** | Retrieving information about MPA ratings. |
 
-### 3. Слой представления (Controller Layer)
-| Контроллер | Назначение |
+### 3. Presentation Layer (Controller Layer)
+| Controller | Purpose |
 | :--- | :--- |
-| **`UserController`** | REST API для управления пользователями и связями дружбы. |
-| **`FilmController`** | REST API для фильмов, лайков и топа популярных картин. |
-| **`GenreController`** | REST API для получения справочных данных о жанрах. |
-| **`MpaController`** | REST API для получения справочных данных о рейтингах MPA. |
+| **`UserController`** | REST API for managing users and friendship relationships. |
+| **`FilmController`** | REST API for movies, likes, and the top of popular movies. |
+| **`GenreController`** | REST API for retrieving reference data about genres. |
+| **`MpaController`** | REST API for retrieving reference data about MPA ratings. |
 
 ---
 
-## 🛠 Технологический стек
+## 🛠 Technology Stack
 
-- **Язык программирования**: Java 21
-- **Фреймворк**: Spring Boot 3.x (Spring Web, Spring JDBC)
-- **База данных**: H2 Database (File & In-Memory modes)
-- **Инструменты работы с БД**: `org.springframework.boot:spring-boot-starter-jdbc` (`JdbcTemplate`)
-- **Логирование HTTP**: Zalando Logbook (`logbook-spring-boot-starter`)
-- **Тестирование**: JUnit 5, AssertJ, Spring Boot Test (`@JdbcTest`, `@AutoConfigureTestDatabase`), Postman
-
----
-
-## 🗄 Структура базы данных
-
-Схема базы данных автоматически инициализируется из скрипта `schema.sql`:
-
-* **`users`**: Информационные карточки пользователей (`user_id`, `email`, `login`, `name`, `birthday`).
-* **`films`**: Каталог фильмов (`film_id`, `name`, `description`, `release_date`, `duration`, `mpa_id`).
-* **`mpa_ratings`**: Справочник возрастных рейтингов (`mpa_id`, `name`).
-* **`genres`**: Справочник жанров (`genre_id`, `name`).
-* **`film_genres`**: Связующая таблица фильмов и жанров (`film_id`, `genre_id`).
-* **`likes`**: Фиксация лайков пользователей к фильмам (`film_id`, `user_id`).
-* **`friendships`**: Статусы и связи дружбы между пользователями (`user_id`, `friend_id`, `status`).
+- **Programming Language**: Java 21
+- **Framework**: Spring Boot 3.x (Spring Web, Spring JDBC)
+- **Database**: H2 Database (File & In-Memory modes)
+- **Database Tools**: `org.springframework.boot:spring-boot-starter-jdbc` (`JdbcTemplate`)
+- **HTTP Logging**: Zalando Logbook (`logbook-spring-boot-starter`)
+- **Testing**: JUnit 5, AssertJ, Spring Boot Test (`@JdbcTest`, `@AutoConfigureTestDatabase`), Postman
 
 ---
 
-## 💡 Бизнес-логика и REST API
+## 🗄 Database Structure
 
-### 1. Пользователи и Односторонняя дружба (`/users`)
-* **Односторонняя дружба**: Когда пользователь добавляет кого-то в друзья, связь фиксируется только у инициатора запроса до момента подтверждения.
+The database schema is automatically initialized from the `schema.sql` script:
 
-| Метод | Эндпоинт | Описание |
+* **`users`**: User information cards (`user_id`, `email`, `login`, `name`, `birthday`).
+* **`films`**: Movie catalog (`film_id`, `name`, `description`, `release_date`, `duration`, `mpa_id`).
+* **`mpa_ratings`**: Age rating reference directory (`mpa_id`, `name`).
+* **`genres`**: Genre reference directory (`genre_id`, `name`).
+* **`film_genres`**: Linking table for movies and genres (`film_id`, `genre_id`).
+* **`likes`**: Recording of user likes for movies (`film_id`, `user_id`).
+* **`friendships`**: Friendship statuses and relationships between users (`user_id`, `friend_id`, `status`).
+
+---
+
+## 💡 Business Logic and REST API
+
+### 1. Users and One-Sided Friendship (`/users`)
+* **One-sided friendship**: When a user adds someone as a friend, the relationship is recorded only for the request initiator until confirmation.
+
+| Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/users` | Получение списка всех пользователей. |
-| `GET` | `/users/{id}` | Получение данных пользователя по ID. |
-| `POST` | `/users` | Создание нового пользователя. |
-| `PUT` | `/users` | Обновление данных пользователя. |
-| `PUT` | `/users/{id}/friends/{friendId}` | Отправка заявки / добавление в друзья. |
-| `DELETE` | `/users/{id}/friends/{friendId}` | Удаление из друзей. |
-| `GET` | `/users/{id}/friends` | Список друзей пользователя. |
-| `GET` | `/users/{id}/friends/common/{otherId}` | Список общих друзей двух пользователей. |
+| `GET` | `/users` | Retrieving the list of all users. |
+| `GET` | `/users/{id}` | Retrieving user data by ID. |
+| `POST` | `/users` | Creating a new user. |
+| `PUT` | `/users` | Updating user data. |
+| `PUT` | `/users/{id}/friends/{friendId}` | Sending a request / adding as a friend. |
+| `DELETE` | `/users/{id}/friends/{friendId}` | Removing from friends. |
+| `GET` | `/users/{id}/friends` | List of the user's friends. |
+| `GET` | `/users/{id}/friends/common/{otherId}` | List of common friends of two users. |
 
-### 2. Фильмы и Лайки (`/films`)
+### 2. Movies and Likes (`/films`)
 
-| Метод | Эндпоинт | Описание |
+| Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/films` | Получение списка всех фильмов. |
-| `GET` | `/films/{id}` | Получение фильма по ID. |
-| `POST` | `/films` | Добавление фильма (с указанием `mpa` и списка `genres`). |
-| `PUT` | `/films` | Обновление данных фильма. |
-| `PUT` | `/films/{id}/like/{userId}` | Поставить лайк фильму. |
-| `DELETE` | `/films/{id}/like/{userId}` | Удалить лайк у фильма. |
-| `GET` | `/films/popular?count={count}` | Топ `count` наиболее популярных фильмов по лайкам (default: 10). |
+| `GET` | `/films` | Retrieving the list of all movies. |
+| `GET` | `/films/{id}` | Retrieving a movie by ID. |
+| `POST` | `/films` | Adding a movie (with `mpa` and a list of `genres`). |
+| `PUT` | `/films` | Updating movie data. |
+| `PUT` | `/films/{id}/like/{userId}` | Like a movie. |
+| `DELETE` | `/films/{id}/like/{userId}` | Remove a like from a movie. |
+| `GET` | `/films/popular?count={count}` | Top `count` most popular movies by likes (default: 10). |
 
-### 3. Справочники: Жанры и MPA-рейтинги
+### 3. Reference Directories: Genres and MPA Ratings
 
-#### Жанры (`/genres`):
-| Метод | Эндпоинт | Описание |
+#### Genres (`/genres`):
+| Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/genres` | Получение списка всех жанров. |
-| `GET` | `/genres/{id}` | Получение жанра по ID. |
+| `GET` | `/genres` | Retrieving the list of all genres. |
+| `GET` | `/genres/{id}` | Retrieving a genre by ID. |
 
-*Пример ответа `/genres/1`:*
+*Example response for `/genres/1`:*
 ```json
 {
   "id": 1,
-  "name": "Комедия"
+  "name": "Comedy"
 }
